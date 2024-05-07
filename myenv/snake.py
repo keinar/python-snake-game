@@ -15,16 +15,11 @@ class Snake:
         # The snake's head should be positioned away from the top edge to prevent immediate collision
         # Adjust the starting y-coordinate to be lower on the canvas to prevent collision with the wall on y-axis
         # The snake's body parts should be spaced out vertically to prevent self-collision
-        start_y = canvas.winfo_height() // 2 + (space_size * body_parts)
+        start_y = canvas.winfo_height() // 2 - (space_size * (body_parts // 2))
 
         # Initialize the snake's body parts vertically within the canvas bounds
         for i in range(body_parts):
-            body_part_y = start_y - (i * space_size)
-            # Ensure the body part is not placed outside the canvas
-            if body_part_y < space_size:
-                body_part_y = space_size
-            elif body_part_y > canvas.winfo_height() - space_size:
-                body_part_y = canvas.winfo_height() - space_size
+            body_part_y = start_y + (i * space_size)
             self.coordinates.append([start_x, body_part_y])
 
         for x, y in self.coordinates:
