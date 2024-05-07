@@ -69,7 +69,7 @@ class Game:
             self.direction = new_direction
 
     def start_game(self):
-        self.direction = "up"  # Set the initial direction to 'up' to avoid immediate collision
+        self.direction = "up"  # Set the initial direction to 'up' to match the vertical body parts
         self.score = 0
         self.speed = 80
         self.score_label.config(text="Score:{}".format(self.score))
@@ -89,9 +89,9 @@ class Game:
         current_width = self.canvas.winfo_width()
         current_height = self.canvas.winfo_height()
         print(f"Current canvas dimensions: width={current_width}, height={current_height}")
-        # Allow a small margin of error in the canvas size
-        width_tolerance = self.game_width + 2
-        height_tolerance = self.game_height + 2
+        # Allow a larger margin of error in the canvas size
+        width_tolerance = self.game_width + 10  # Increased tolerance for width
+        height_tolerance = self.game_height + 10  # Increased tolerance for height
         if self.game_width <= current_width <= width_tolerance and self.game_height <= current_height <= height_tolerance:
             self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color)
             self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
