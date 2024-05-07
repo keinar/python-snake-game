@@ -31,8 +31,6 @@ class Game:
         self.window.bind('<Down>', lambda event: self.change_direction('down'))
         self.window.bind('<Return>', self.restart_game)
 
-    # Placeholder for methods to be moved here
-
     def check_collision(self):
         x, y = self.snake.coordinates[0]
 
@@ -70,6 +68,8 @@ class Game:
         self.score = 0
         self.label.config(text="Score:{}".format(self.score))
         self.canvas.delete("gameover")
+        from snake import Snake
+        from food import Food
         self.snake = Snake(self)
         self.food = Food(self)
         self.next_turn()
@@ -108,35 +108,3 @@ class Game:
             self.game_over()
         else:
             self.window.after(self.speed, self.next_turn)
-
-
-class Food:
-    def __init__(self, game):
-        x = random.randint(0, (game.game_width//game.space_size) - 1) * game.space_size
-        y = random.randint(0, (game.game_height//game.space_size) - 1) * game.space_size
-
-        self.coordinates = [x, y]
-        game.canvas.create_oval(x, y, x + game.space_size, y + game.space_size, fill=game.food_color, tag='food')
-
-from game import Game
-from tkinter import Canvas
-
-from game import Game
-from tkinter import Canvas
-
-class Snake:
-    def __init__(self, game):
-        self.body_size = game.body_parts
-        self.coordinates = []
-        self.squares = []
-
-        for i in range(0, game.body_parts):
-            self.coordinates.append([0, 0])
-
-        for x, y in self.coordinates:
-            square = game.canvas.create_rectangle(x, y, x + game.space_size, y + game.space_size, fill=game.snake_color, tag='snake')
-            self.squares.append(square)
-
-if __name__ == "__main__":
-    game_instance = Game()
-    game_instance.window.mainloop()
