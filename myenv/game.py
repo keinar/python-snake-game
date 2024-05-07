@@ -69,7 +69,7 @@ class Game:
             self.direction = new_direction
 
     def start_game(self):
-        self.direction = "up"  # Set the initial direction to 'up' to match the vertical body parts
+        self.direction = "down"  # Set the initial direction to 'down' to prevent collision with the wall
         self.score = 0
         self.speed = 80
         self.score_label.config(text="Score:{}".format(self.score))
