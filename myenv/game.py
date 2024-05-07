@@ -2,6 +2,7 @@ from tkinter import *
 from food import Food
 from snake import Snake
 import time
+import random
 
 class Game:
     def __init__(self):
@@ -36,6 +37,18 @@ class Game:
         self.window.bind('<Down>', lambda event: self.change_direction('down'))
         self.window.bind('<Return>', self.restart_game)
 
+        # The action space is static, so we can define it in the __init__ method
+        self.action_space = ['up', 'down', 'left', 'right']
+
+        self.q_table = {}  # Initialize the Q-table as an empty dictionary
+        self.initialize_q_table()  # Call the method to populate the Q-table with default values
+
+    def initialize_q_table(self):
+        """Initialize the Q-table with default values."""
+        # The Q-table will be populated with new states as they are encountered
+        # No pre-population is necessary as the state space is large
+        pass  # Placeholder for any future initialization logic
+
     def check_collision(self):
         x, y = self.snake.coordinates[0]
 
@@ -67,6 +80,24 @@ class Game:
             self.direction = new_direction
         elif new_direction == 'down' and self.direction != 'up':
             self.direction = new_direction
+
+    def get_state(self):
+        """Return the current state of the game."""
+        state = {
+            'snake_position': self.snake.coordinates,
+            'food_position': self.food.coordinates,
+            'current_direction': self.direction
+        }
+        return state
+
+    def get_reward(self):
+        """Calculate and return the reward based on the game's rules."""
+        if self.check_collision():
+            return -10  # Negative reward for collision
+        elif self.snake.coordinates[0] == self.food.coordinates:
+            return 10  # Positive reward for eating food
+        else:
+            return -1  # Slight negative reward to encourage faster food finding
 
     def start_game(self):
         self.direction = "down"  # Set the initial direction to 'down' to prevent collision with the wall
@@ -107,23 +138,54 @@ class Game:
         self.start_game()
 
     def next_turn(self):
+        state = self.get_state()
+        action = self.select_action(state)
+        # Execute the action and get the reward
+        reward = self.execute_action(action)
+        # Get the next state after the action
+        next_state = self.get_state()
+        # Update the Q-table with the new information
+        self.update_q_table(state, action, reward, next_state)
+
+        if self.check_collision():
+            self.game_over()
+        else:
+            self.window.after(self.speed, self.next_turn)
+
+    def select_action(self, state):
+        """Select an action based on the epsilon-greedy strategy."""
+        epsilon = 0.1  # Exploration probability
+        if random.uniform(0, 1) < epsilon:
+            # Explore: select a random action
+            return random.choice(self.action_space)
+        else:
+            # Exploit: select the best action based on the current state and Q-table
+            q_values = self.q_table.get(state, {})
+            if q_values:
+                return max(q_values, key=q_values.get)
+            else:
+                # If the state is not in the Q-table, choose randomly
+                return random.choice(self.action_space)
+
+    def execute_action(self, action):
+        """Execute the selected action and update the game state."""
         x, y = self.snake.coordinates[0]
 
-        # Log the current position and direction of the snake
-        print(f"Turn: Head Position - x: {x}, y: {y}, Direction: {self.direction}")
-
-        if self.direction == "up":
+        if action == "up":
             y -= self.space_size
-        elif self.direction == "down":
+        elif action == "down":
             y += self.space_size
-        elif self.direction == "left":
+        elif action == "left":
             x -= self.space_size
-        elif self.direction == "right":
+        elif action == "right":
             x += self.space_size
 
         self.snake.coordinates.insert(0, (x, y))
         square = self.canvas.create_rectangle(x, y, x + self.space_size, y + self.space_size, fill=self.snake_color)
         self.snake.squares.insert(0, square)
+
+        # Initialize reward
+        reward = 0
 
         if x == self.food.coordinates[0] and y == self.food.coordinates[1]:
             self.score += 1
@@ -131,12 +193,31 @@ class Game:
             self.canvas.delete("food")
             self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
             self.speed = max(30, self.speed - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
+            reward = 10  # Positive reward for eating food
         else:
             del self.snake.coordinates[-1]
             self.canvas.delete(self.snake.squares[-1])
             del self.snake.squares[-1]
+            reward = -1  # Slight negative reward to encourage faster food finding
 
+        # Check for collisions and continue the game loop
         if self.check_collision():
             self.game_over()
-        else:
-            self.window.after(self.speed, self.next_turn)
+            reward = -10  # Negative reward for collision
+
+        return reward
+
+    def update_q_table(self, state, action, reward, next_state):
+        """Update the Q-table based on the action taken and the resulting state."""
+        # Learning rate and discount factor
+        alpha = 0.1
+        gamma = 0.9
+
+        # Current Q-value for the state-action pair
+        current_q_value = self.q_table.get(state, {}).get(action, 0)
+
+        # Maximum Q-value for the next state
+        next_max_q_value = max(self.q_table.get(next_state, {}).values(), default=0)
+
+        # Q-learning update rule
+        self.q_table[state][action] = current_q_value + alpha * (reward + gamma * next_max_q_value - current_q_value)
