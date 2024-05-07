@@ -53,9 +53,11 @@ def next_turn(snake, food):
         label.config(text="Score:{}".format(score))
         canvas.delete("food")
         food = Food()
+        SPEED = max(30, SPEED - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
     else:
         canvas.delete(snake.squares[-1])
         del snake.coordinates[-1]
+        canvas.delete(snake.squares[-1])
         del snake.squares[-1]
 
     if check_collision(snake):
