@@ -68,12 +68,17 @@ class Game:
             self.direction = new_direction
 
     def start_game(self):
-        self.direction = "down"
+        self.direction = "up"  # Set the initial direction to 'up' to avoid immediate collision
         self.score = 0
         self.speed = 80
         self.score_label.config(text="Score:{}".format(self.score))
         self.canvas.delete("gameover")
-        self.snake = Snake(self)
+
+        # Delay the snake's creation until the canvas is fully initialized
+        self.window.after(100, self.initialize_game_objects)
+
+    def initialize_game_objects(self):
+        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color)
         self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
         self.next_turn()
 
