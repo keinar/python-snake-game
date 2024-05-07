@@ -1,5 +1,6 @@
 from tkinter import *
-import random
+from food import Food
+from snake import Snake
 
 class Game:
     def __init__(self):
@@ -16,10 +17,13 @@ class Game:
         self.window = Tk()
         self.window.title("Snake Game")
         self.window.resizable(False, False)
-        self.label = Label(self.window, text="Score:{}".format(self.score), font=("Consolas", 40))
-        self.label.pack()
+
+        self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
+        self.score_label.grid(row=0, column=0, sticky="w")
+
         self.canvas = Canvas(self.window, bg=self.background_color, height=self.game_height, width=self.game_width)
-        self.canvas.pack()
+        self.canvas.grid(row=1, column=0, columnspan=2)
+
         self.snake = None
         self.food = None
         self.start_game()
@@ -35,15 +39,15 @@ class Game:
         x, y = self.snake.coordinates[0]
 
         if x < 0 or x >= self.game_width:
-            print("GAME OVER")
+            print("GAME OVER: Collision with wall on x-axis")
             return True
         elif y < 0 or y >= self.game_height:
-            print("GAME OVER")
+            print("GAME OVER: Collision with wall on y-axis")
             return True
 
         for body_part in self.snake.coordinates[1:]:
             if x == body_part[0] and y == body_part[1]:
-                print("GAME OVER")
+                print("GAME OVER: Collision with self")
                 return True
 
         return False
@@ -66,12 +70,11 @@ class Game:
     def start_game(self):
         self.direction = "down"
         self.score = 0
-        self.label.config(text="Score:{}".format(self.score))
+        self.speed = 80
+        self.score_label.config(text="Score:{}".format(self.score))
         self.canvas.delete("gameover")
-        from snake import Snake
-        from food import Food
         self.snake = Snake(self)
-        self.food = Food(self)
+        self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
         self.next_turn()
 
     def restart_game(self, event):
@@ -95,9 +98,9 @@ class Game:
 
         if x == self.food.coordinates[0] and y == self.food.coordinates[1]:
             self.score += 1
-            self.label.config(text="Score:{}".format(self.score))
+            self.score_label.config(text="Score:{}".format(self.score))
             self.canvas.delete("food")
-            self.food = Food(self)
+            self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
             self.speed = max(30, self.speed - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
         else:
             del self.snake.coordinates[-1]
