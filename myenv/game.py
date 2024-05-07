@@ -1,6 +1,7 @@
 from tkinter import *
 from food import Food
 from snake import Snake
+import time
 
 class Game:
     def __init__(self):
@@ -74,19 +75,42 @@ class Game:
         self.score_label.config(text="Score:{}".format(self.score))
         self.canvas.delete("gameover")
 
-        # Delay the snake's creation until the canvas is fully initialized
-        self.window.after(100, self.initialize_game_objects)
+        # Increase the delay to allow more time for the canvas to be fully rendered
+        self.window.after(500, self.initialize_game_objects)
 
     def initialize_game_objects(self):
-        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color)
-        self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
-        self.next_turn()
+        print("Initializing game objects...")
+        self.check_canvas_dimensions()
+
+    def check_canvas_dimensions(self):
+        if not hasattr(self, 'init_attempts'):
+            self.init_attempts = 0  # Initialize the counter on the first method call
+        # Log the current canvas dimensions
+        current_width = self.canvas.winfo_width()
+        current_height = self.canvas.winfo_height()
+        print(f"Current canvas dimensions: width={current_width}, height={current_height}")
+        # Allow a small margin of error in the canvas size
+        width_tolerance = self.game_width + 2
+        height_tolerance = self.game_height + 2
+        if self.game_width <= current_width <= width_tolerance and self.game_height <= current_height <= height_tolerance:
+            self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color)
+            self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
+            self.next_turn()
+        else:
+            self.init_attempts += 1
+            if self.init_attempts < 50:  # Maximum number of attempts before timing out
+                self.window.after(100, self.check_canvas_dimensions)
+            else:
+                print("Error: Canvas dimensions could not be confirmed after multiple attempts.")
 
     def restart_game(self, event):
         self.start_game()
 
     def next_turn(self):
         x, y = self.snake.coordinates[0]
+
+        # Log the current position and direction of the snake
+        print(f"Turn: Head Position - x: {x}, y: {y}, Direction: {self.direction}")
 
         if self.direction == "up":
             y -= self.space_size
