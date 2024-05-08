@@ -1,17 +1,20 @@
 from tkinter import Canvas
 
 class Snake:
-    def __init__(self, body_parts, canvas, space_size, snake_color):
+    def __init__(self, body_parts, canvas, space_size, snake_color, initial_position=None):
         self.body_size = body_parts
         self.coordinates = []
         self.squares = []
 
-        # Start the snake in the middle of the canvas
-        start_x = canvas.winfo_width() // 2
-        # Initialize the snake's body parts vertically within the canvas bounds
-        # The snake's body parts will be initialized upwards from the starting position
-        # Adjust the start_y position to be higher up on the canvas to prevent immediate collision
-        start_y = (canvas.winfo_height() // 2) - (space_size * (body_parts - 1))
+        if initial_position:
+            start_x, start_y = initial_position
+        else:
+            # Start the snake in the middle of the canvas
+            start_x = canvas.winfo_width() // 2
+            # Initialize the snake's body parts vertically within the canvas bounds
+            # The snake's body parts will be initialized upwards from the starting position
+            # Adjust the start_y position to be higher up on the canvas to prevent immediate collision
+            start_y = (canvas.winfo_height() // 2) - (space_size * (body_parts - 1))
 
         for i in range(body_parts):
             body_part_y = start_y - (i * space_size)  # Adjusted to initialize upwards

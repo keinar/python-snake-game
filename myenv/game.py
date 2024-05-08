@@ -49,8 +49,10 @@ class Game:
         # No pre-population is necessary as the state space is large
         pass  # Placeholder for any future initialization logic
 
-    def check_collision(self):
-        x, y = self.snake.coordinates[0]
+    def check_collision(self, position=None):
+        if position is None:
+            position = self.snake.coordinates[0]
+        x, y = position
 
         if x < 0 or x >= self.game_width:
             print("GAME OVER: Collision with wall on x-axis")
@@ -124,7 +126,7 @@ class Game:
         width_tolerance = self.game_width + 10  # Increased tolerance for width
         height_tolerance = self.game_height + 10  # Increased tolerance for height
         if self.game_width <= current_width <= width_tolerance and self.game_height <= current_height <= height_tolerance:
-            self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color)
+            self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(self.game_width // 2, self.game_height // 4))
             self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
             self.next_turn()
         else:
@@ -153,19 +155,44 @@ class Game:
             self.window.after(self.speed, self.next_turn)
 
     def select_action(self, state):
-        """Select an action based on the epsilon-greedy strategy."""
+        """Select an action based on the epsilon-greedy strategy, avoiding immediate collisions."""
         epsilon = 0.1  # Exploration probability
+        safe_actions = self.get_safe_actions()  # Get the list of safe actions based on the current state
+
         if random.uniform(0, 1) < epsilon:
-            # Explore: select a random action
-            return random.choice(self.action_space)
+            # Explore: select a random safe action
+            return random.choice(safe_actions)
         else:
             # Exploit: select the best action based on the current state and Q-table
             q_values = self.q_table.get(state, {})
             if q_values:
-                return max(q_values, key=q_values.get)
+                # Filter out unsafe actions from the Q-values dictionary
+                safe_q_values = {action: q for action, q in q_values.items() if action in safe_actions}
+                if safe_q_values:
+                    return max(safe_q_values, key=safe_q_values.get)
+                else:
+                    # If no safe actions have Q-values, choose a safe action randomly
+                    return random.choice(safe_actions)
             else:
-                # If the state is not in the Q-table, choose randomly
-                return random.choice(self.action_space)
+                # If the state is not in the Q-table, choose a safe action randomly
+                return random.choice(safe_actions)
+
+    def get_safe_actions(self):
+        """Return a list of safe actions that won't result in immediate collisions."""
+        safe_actions = []
+        x, y = self.snake.coordinates[0]
+
+        # Check if moving in each direction would result in a collision
+        if y - self.space_size >= 0 and not self.check_collision((x, y - self.space_size)):
+            safe_actions.append('up')
+        if y + self.space_size < self.game_height and not self.check_collision((x, y + self.space_size)):
+            safe_actions.append('down')
+        if x - self.space_size >= 0 and not self.check_collision((x - self.space_size, y)):
+            safe_actions.append('left')
+        if x + self.space_size < self.game_width and not self.check_collision((x + self.space_size, y)):
+            safe_actions.append('right')
+
+        return safe_actions if safe_actions else ['up', 'down', 'left', 'right']  # Return all actions if no safe actions are found
 
     def execute_action(self, action):
         """Execute the selected action and update the game state."""
