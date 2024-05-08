@@ -22,6 +22,7 @@ class Game:
 
         self.turn_counter = 0  # Initialize the turn counter at 0
         self.max_turns = 100  # Set the maximum number of turns for the game
+        self.game_over_flag = False  # Flag to indicate if the game is over
 
         self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
         self.score_label.grid(row=0, column=0, sticky="w")
@@ -75,6 +76,7 @@ class Game:
         self.canvas.delete(ALL)
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, fill="red", text="GAME OVER", font=("consolas", 70), tag="gameover")
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2 + 50, fill="blue", text="Press Enter to restart", font=("consolas", 30), tag="gameover")
+        self.game_over_flag = True  # Set the game over flag to True
 
     def change_direction(self, new_direction):
         if new_direction == 'left' and self.direction != 'right':
@@ -117,18 +119,19 @@ class Game:
     def initialize_game_objects(self):
         print("Initializing game objects...")
         self.check_canvas_dimensions()
+        # Set the initial position of the snake's head to the middle of the canvas
+        initial_snake_x = self.game_width // 2
+        initial_snake_y = self.game_height // 2
+        # Adjust the y-coordinate to ensure it's not too close to the top or bottom
+        initial_snake_y = max(self.space_size * self.body_parts, min(initial_snake_y, self.game_height - self.space_size * self.body_parts))
+        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(initial_snake_x, initial_snake_y))
+        print(f"Initial snake position: {self.snake.coordinates[0]}")  # Log the initial position of the snake
         # Determine a safe initial direction based on the starting position of the snake
         safe_directions = self.get_safe_actions()
         self.direction = safe_directions[0] if safe_directions else 'right'
-        # Initialize the snake in the middle of the canvas with enough space to avoid immediate collision
-        initial_snake_x = self.game_width // 2
-        initial_snake_y = self.game_height // 2
-        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(initial_snake_x, initial_snake_y))
-        print(f"Initial snake position: {self.snake.coordinates[0]}")  # Log the initial position of the snake
-        self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
-        # Ensure the first move is in a safe direction
         self.change_direction(self.direction)
         print(f"Initial direction: {self.direction}")  # Log the initial direction of the snake
+        self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
         self.next_turn()
 
     def check_canvas_dimensions(self):
@@ -156,6 +159,8 @@ class Game:
         self.start_game()
 
     def next_turn(self):
+        if self.game_over_flag:  # Check if the game is over
+            return  # Exit the function to prevent further game progression
         print(f"Turn: {self.turn_counter}")  # Log the current turn number
         self.turn_counter += 1  # Increment the turn counter
         if self.turn_counter > self.max_turns:  # Check if the maximum number of turns has been reached
