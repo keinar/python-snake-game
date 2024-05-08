@@ -28,3 +28,23 @@ class Snake:
         for x, y in self.coordinates:
             square = canvas.create_rectangle(x, y, x + space_size, y + space_size, fill=snake_color, tag='snake')
             self.squares.append(square)
+
+    def reposition_snake(self, canvas, game_width, game_height, space_size):
+        """Reposition the snake to a safe starting location on the canvas."""
+        # Find a safe starting position for the snake's head
+        safe_x = game_width // 2
+        safe_y = game_height // 2
+
+        # Adjust the y-coordinate to ensure it's not too close to the top or bottom
+        safe_y = max(space_size * self.body_size, min(safe_y, game_height - space_size * self.body_size))
+
+        # Update the snake's coordinates to the new safe position
+        self.coordinates = [[safe_x, safe_y - i * space_size] for i in range(self.body_size)]
+
+        # Update the canvas with the new position of the snake
+        for square in self.squares:
+            canvas.delete(square)
+        self.squares = []
+        for x, y in self.coordinates:
+            square = canvas.create_rectangle(x, y, x + space_size, y + space_size, fill=snake_color, tag='snake')
+            self.squares.append(square)

@@ -1,3 +1,4 @@
+import signal
 from tkinter import *
 from food import Food
 from snake import Snake
@@ -51,11 +52,20 @@ class Game:
         self.q_table = {}  # Initialize the Q-table as an empty dictionary
         self.initialize_q_table()  # Call the method to populate the Q-table with default values
 
+        # Register the signal handler for termination signals
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+
     def initialize_q_table(self):
         """Initialize the Q-table with default values."""
         # The Q-table will be populated with new states as they are encountered
         # No pre-population is necessary as the state space is large
         pass  # Placeholder for any future initialization logic
+
+    def signal_handler(self, signum, frame):
+        """Handle termination signals to gracefully exit the game loop."""
+        self.game_over_flag = True
+        self.game_over()
 
     def check_collision(self, position=None):
         if position is None:
@@ -135,7 +145,10 @@ class Game:
         if safe_directions:
             self.direction = safe_directions[0]  # Set the initial direction to the first safe direction
         else:
-            self.direction = 'right'  # Default direction if no safe actions are found
+            # If no safe actions are found, reposition the snake to a safe starting position
+            self.snake.reposition_snake()
+            safe_directions = self.get_safe_actions()
+            self.direction = safe_directions[0] if safe_directions else 'right'  # Set the initial direction to the first safe direction or default if none are safe
         self.change_direction(self.direction)
         print(f"Initial direction: {self.direction}")  # Log the initial direction of the snake
         self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
@@ -191,6 +204,7 @@ class Game:
         else:
             self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)  # Decrease epsilon with decay, ensuring it's not below min_epsilon
             if not self.game_over_flag:  # Only schedule the next turn if the game is not over
+                print(f"Next turn scheduled. Current position: {self.snake.coordinates[0]}, Direction: {self.direction}")  # Log the current position and direction
                 self.window.after(self.speed, self.next_turn)
 
     def select_action(self, state):
