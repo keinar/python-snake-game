@@ -117,13 +117,16 @@ class Game:
     def initialize_game_objects(self):
         print("Initializing game objects...")
         self.check_canvas_dimensions()
+        # Determine a safe initial direction based on the starting position of the snake
         safe_directions = self.get_safe_actions()
-        if safe_directions:
-            self.direction = safe_directions[0]  # Set the initial direction to the first safe direction
-        else:
-            self.direction = 'right'  # Default direction if no safe actions are found
-        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(self.game_width // 2, self.game_height // 4))
+        self.direction = safe_directions[0] if safe_directions else 'right'
+        # Initialize the snake in the middle of the canvas with enough space to avoid immediate collision
+        initial_snake_x = self.game_width // 2
+        initial_snake_y = self.game_height // 2
+        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(initial_snake_x, initial_snake_y))
         self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
+        # Ensure the first move is in a safe direction
+        self.change_direction(self.direction)
         self.next_turn()
 
     def check_canvas_dimensions(self):
@@ -151,10 +154,20 @@ class Game:
         self.start_game()
 
     def next_turn(self):
+        print(f"Turn: {self.turn_counter}")  # Log the current turn number
         self.turn_counter += 1  # Increment the turn counter
         if self.turn_counter > self.max_turns:  # Check if the maximum number of turns has been reached
             self.game_over()  # Terminate the game
             return  # Exit the function to prevent further game progression
+        state = self.get_state()
+        action = self.select_action(state)
+        print(f"Action selected: {action}")  # Log the action selected by the AI
+        # Execute the action and get the reward
+        reward = self.execute_action(action)
+        # Get the next state after the action
+        next_state = self.get_state()
+        # Update the Q-table with the new information
+        self.update_q_table(state, action, reward, next_state)
 
         if self.score == 0:  # On the first turn, ensure the snake moves in a safe direction
             # Determine a safe initial direction based on the starting position of the snake
