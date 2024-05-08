@@ -226,28 +226,26 @@ class Game:
                 return random.choice(safe_actions)
 
     def get_safe_actions(self):
-        """Return a list of safe actions that won't result in immediate collisions."""
+        """Return a list of safe actions that won't result in immediate collisions, prioritizing the direction towards the food."""
         safe_actions = []
         x, y = self.snake.coordinates[0]
+        food_x, food_y = self.food.coordinates
 
         # Check if moving in each direction would result in a collision
         if y - self.space_size >= 0 and not any((x, y - self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append('up')
-            print(f"Action 'up' is safe.")
+            safe_actions.append(('up', abs(food_x - x) + abs(food_y - (y - self.space_size))))
         if y + self.space_size < self.game_height and not any((x, y + self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append('down')
-            print(f"Action 'down' is safe.")
+            safe_actions.append(('down', abs(food_x - x) + abs(food_y - (y + self.space_size))))
         if x - self.space_size >= 0 and not any((x - self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append('left')
-            print(f"Action 'left' is safe.")
+            safe_actions.append(('left', abs(food_x - (x - self.space_size)) + abs(food_y - y)))
         if x + self.space_size < self.game_width and not any((x + self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append('right')
-            print(f"Action 'right' is safe.")
+            safe_actions.append(('right', abs(food_x - (x + self.space_size)) + abs(food_y - y)))
 
-        if not safe_actions:
-            print("No safe actions found. Defaulting to all actions.")
-            return ['up', 'down', 'left', 'right']  # Return all actions if no safe actions are found
-        return safe_actions
+        # Sort the safe actions by the distance to the food, ascending
+        safe_actions.sort(key=lambda action: action[1])
+
+        # Return the sorted list of safe actions without the distances
+        return [action[0] for action in safe_actions]
 
     def execute_action(self, action):
         """Execute the selected action and update the game state."""
