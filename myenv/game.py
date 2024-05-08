@@ -186,32 +186,12 @@ class Game:
         # Update the Q-table with the new information
         self.update_q_table(state, action, reward, next_state)
 
-        if self.score == 0:  # On the first turn, ensure the snake moves in a safe direction
-            # Determine a safe initial direction based on the starting position of the snake
-            safe_directions = self.get_safe_actions()
-            if 'down' in safe_directions:
-                self.change_direction('down')
-            elif 'right' in safe_directions:
-                self.change_direction('right')
-            elif 'left' in safe_directions:
-                self.change_direction('left')
-            elif 'up' in safe_directions:
-                self.change_direction('up')
-        else:
-            state = self.get_state()
-            action = self.select_action(state)
-            # Execute the action and get the reward
-            reward = self.execute_action(action)
-            # Get the next state after the action
-            next_state = self.get_state()
-            # Update the Q-table with the new information
-            self.update_q_table(state, action, reward, next_state)
-
         if self.check_collision():
             self.game_over()
         else:
             self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)  # Decrease epsilon with decay, ensuring it's not below min_epsilon
-            self.window.after(self.speed, self.next_turn)
+            if not self.game_over_flag:  # Only schedule the next turn if the game is not over
+                self.window.after(self.speed, self.next_turn)
 
     def select_action(self, state):
         """Select an action based on the epsilon-greedy strategy, avoiding immediate collisions."""
