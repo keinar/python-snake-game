@@ -50,6 +50,20 @@ To balance the exploration of new actions and the exploitation of known rewardin
 
 The AI trainer was tested in both training and play modes. During testing, the AI demonstrated an ability to learn from its actions and improve its gameplay over time. The AI started with a high rate of collisions and gradually learned to navigate the game environment more effectively, avoiding walls and its own body while pursuing food.
 
+#### Latest Testing Observations
+
+During the most recent testing phase, the AI trainer encountered repeated "GAME OVER: Collision with self" states, indicating that the AI's decision-making process requires further debugging. The AI is expected to learn from its actions and avoid collisions over time; however, the current behavior suggests that the AI is not effectively learning from its environment or that there may be an issue with the state representation or reward calculation.
+
+#### Need for Further Debugging
+
+The immediate game over states observed during testing highlight the need for additional debugging and refinement of the AI's learning logic. The following areas will be the focus of ongoing development:
+
+- Reviewing the state representation to ensure it provides the AI with accurate and useful information about the game environment.
+- Refining the reward calculation to align with the desired learning outcomes and to encourage the AI to make safer decisions.
+- Enhancing the AI's decision-making logic to prevent it from making moves that result in immediate collisions.
+
+The goal is to develop an AI that can consistently improve its gameplay and eventually master the game. Further updates will be provided as the debugging process progresses and improvements are made.
+
 ### Observing AI Learning
 
 To observe the AI's learning process, users can watch the console logs that output the AI's chosen actions and the resulting state of the game after each turn. Additionally, visual cues in the game's interface, such as changes in the snake's movement or speed, can indicate the AI's decision-making and learning progress.
