@@ -140,14 +140,26 @@ class Game:
         self.start_game()
 
     def next_turn(self):
-        state = self.get_state()
-        action = self.select_action(state)
-        # Execute the action and get the reward
-        reward = self.execute_action(action)
-        # Get the next state after the action
-        next_state = self.get_state()
-        # Update the Q-table with the new information
-        self.update_q_table(state, action, reward, next_state)
+        if self.score == 0:  # On the first turn, ensure the snake moves in a safe direction
+            # Determine a safe initial direction based on the starting position of the snake
+            safe_directions = self.get_safe_actions()
+            if 'down' in safe_directions:
+                self.change_direction('down')
+            elif 'right' in safe_directions:
+                self.change_direction('right')
+            elif 'left' in safe_directions:
+                self.change_direction('left')
+            elif 'up' in safe_directions:
+                self.change_direction('up')
+        else:
+            state = self.get_state()
+            action = self.select_action(state)
+            # Execute the action and get the reward
+            reward = self.execute_action(action)
+            # Get the next state after the action
+            next_state = self.get_state()
+            # Update the Q-table with the new information
+            self.update_q_table(state, action, reward, next_state)
 
         if self.check_collision():
             self.game_over()
