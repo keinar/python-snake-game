@@ -1,13 +1,15 @@
+import signal
 from tkinter import *
 from food import Food
 from snake import Snake
+import time
+import random
 
 class Game:
     def __init__(self):
         self.game_width = 1000
         self.game_height = 700
-        self.speed = 150
-        self.speed_to_display = 0
+        self.speed = 80
         self.space_size = 40
         self.body_parts = 3
         self.snake_color = "#00FF00"
@@ -18,12 +20,17 @@ class Game:
         self.window = Tk()
         self.window.title("Snake Game")
         self.window.resizable(False, False)
-        
+
+        self.turn_counter = 0  # Initialize the turn counter at 0
+        self.max_turns = 100  # Set the maximum number of turns for the game
+        self.game_over_flag = False  # Flag to indicate if the game is over
+
+        self.epsilon = 1.0  # Initial epsilon value for exploration
+        self.min_epsilon = 0.01  # Minimum epsilon value to ensure some exploration
+        self.epsilon_decay = 0.01  # Epsilon decay rate after each turn
+
         self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
         self.score_label.grid(row=0, column=0, sticky="w")
-
-        self.speed_label = Label(self.window, text="Current Speed: {}".format(self.speed_to_display), font=("Consolas", 25))
-        self.speed_label.grid(row=0, column=1, sticky="e")
 
         self.canvas = Canvas(self.window, bg=self.background_color, height=self.game_height, width=self.game_width)
         self.canvas.grid(row=1, column=0, columnspan=2)
@@ -39,8 +46,31 @@ class Game:
         self.window.bind('<Down>', lambda event: self.change_direction('down'))
         self.window.bind('<Return>', self.restart_game)
 
-    def check_collision(self):
-        x, y = self.snake.coordinates[0]
+        # The action space is static, so we can define it in the __init__ method
+        self.action_space = ['up', 'down', 'left', 'right']
+
+        self.q_table = {}  # Initialize the Q-table as an empty dictionary
+        self.initialize_q_table()  # Call the method to populate the Q-table with default values
+
+        # Register the signal handler for termination signals
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+
+    def initialize_q_table(self):
+        """Initialize the Q-table with default values."""
+        # The Q-table will be populated with new states as they are encountered
+        # No pre-population is necessary as the state space is large
+        pass  # Placeholder for any future initialization logic
+
+    def signal_handler(self, signum, frame):
+        """Handle termination signals to gracefully exit the game loop."""
+        self.game_over_flag = True
+        self.game_over()
+
+    def check_collision(self, position=None):
+        if position is None:
+            position = self.snake.coordinates[0]
+        x, y = position
 
         if x < 0 or x >= self.game_width:
             print("GAME OVER: Collision with wall on x-axis")
@@ -60,6 +90,7 @@ class Game:
         self.canvas.delete(ALL)
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, fill="red", text="GAME OVER", font=("consolas", 70), tag="gameover")
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2 + 50, fill="blue", text="Press Enter to restart", font=("consolas", 30), tag="gameover")
+        self.game_over_flag = True  # Set the game over flag to True
 
     def change_direction(self, new_direction):
         if new_direction == 'left' and self.direction != 'right':
@@ -71,52 +102,219 @@ class Game:
         elif new_direction == 'down' and self.direction != 'up':
             self.direction = new_direction
 
+    def get_state(self):
+        """Return the current state of the game as a string."""
+        # Convert the positions to a string format
+        snake_position = '-'.join(f"{x},{y}" for x, y in self.snake.coordinates)
+        food_position = f"{self.food.coordinates[0]},{self.food.coordinates[1]}"
+        # Concatenate the positions and current direction into a single string
+        state = f"{snake_position}|{food_position}|{self.direction}"
+        return state
+
+    def get_reward(self):
+        """Calculate and return the reward based on the game's rules."""
+        if self.check_collision():
+            return -10  # Negative reward for collision
+        elif self.snake.coordinates[0] == self.food.coordinates:
+            return 10  # Positive reward for eating food
+        else:
+            return -1  # Slight negative reward to encourage faster food finding
+
     def start_game(self):
-        self.direction = "down"
+        # Removed setting initial direction here; will set it in initialize_game_objects after canvas dimensions are confirmed
         self.score = 0
-        self.speed = 150
-        self.speed_to_display = 0
+        self.speed = 80
         self.score_label.config(text="Score:{}".format(self.score))
-        self.speed_label.config(text="Current Speed:{}".format(self.speed_to_display))
         self.canvas.delete("gameover")
-        self.snake = Snake(self)
+        # Delay the start of the game to ensure the canvas is fully rendered
+        # Increase the delay to allow more time for the canvas to be fully rendered
+        self.window.after(500, self.initialize_game_objects)
+
+    def initialize_game_objects(self):
+        print("Initializing game objects...")
+        self.check_canvas_dimensions()
+        # Set the initial position of the snake's head to the middle of the canvas
+        initial_snake_x = self.game_width // 2
+        initial_snake_y = self.game_height // 2
+        # Adjust the y-coordinate to ensure it's not too close to the top or bottom
+        initial_snake_y = max(self.space_size * self.body_parts, min(initial_snake_y, self.game_height - self.space_size * self.body_parts))
+        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(initial_snake_x, initial_snake_y))
+        print(f"Initial snake position: {self.snake.coordinates[0]}")  # Log the initial position of the snake
+        # Determine a safe initial direction based on the starting position of the snake
+        safe_directions = self.get_safe_actions()
+        if safe_directions:
+            # Choose the safest initial direction that does not lead to a collision in the next turn
+            for direction in safe_directions:
+                self.change_direction(direction)
+                if not self.check_collision(self.snake.get_next_head_position(direction)):
+                    self.direction = direction
+                    break
+        else:
+            # If no safe actions are found, reposition the snake to a safe starting position
+            self.snake.reposition_snake(self.canvas, self.game_width, self.game_height, self.space_size)
+            safe_directions = self.get_safe_actions()
+            self.direction = safe_directions[0] if safe_directions else 'right'  # Set the initial direction to the first safe direction or default if none are safe
+        self.change_direction(self.direction)
+        print(f"Initial direction: {self.direction}")  # Log the initial direction of the snake
         self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
         self.next_turn()
 
+    def check_canvas_dimensions(self):
+        if not hasattr(self, 'init_attempts'):
+            self.init_attempts = 0  # Initialize the counter on the first method call
+        # Log the current canvas dimensions
+        current_width = self.canvas.winfo_width()
+        current_height = self.canvas.winfo_height()
+        print(f"Current canvas dimensions: width={current_width}, height={current_height}")
+        # Allow a larger margin of error in the canvas size
+        width_tolerance = self.game_width + 10  # Increased tolerance for width
+        height_tolerance = self.game_height + 10  # Increased tolerance for height
+        if self.game_width <= current_width <= width_tolerance and self.game_height <= current_height <= height_tolerance:
+            self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(self.game_width // 2, self.game_height // 4))
+            self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
+            self.next_turn()
+        else:
+            self.init_attempts += 1
+            if self.init_attempts < 50:  # Maximum number of attempts before timing out
+                self.window.after(100, self.check_canvas_dimensions)
+            else:
+                print("Error: Canvas dimensions could not be confirmed after multiple attempts.")
+
     def restart_game(self, event):
+        self.game_over_flag = False  # Reset the game over flag
+        self.turn_counter = 0  # Reset the turn counter
         self.start_game()
 
     def next_turn(self):
+        if self.game_over_flag:  # Check if the game is over
+            return  # Exit the function to prevent further game progression
+        print(f"Turn: {self.turn_counter}")  # Log the current turn number
+        self.turn_counter += 1  # Increment the turn counter
+        if self.turn_counter > self.max_turns:  # Check if the maximum number of turns has been reached
+            self.game_over()  # Terminate the game
+            return  # Exit the function to prevent further game progression
+
+        state = self.get_state()
+        action = self.select_action(state)
+        print(f"Action selected: {action}")  # Log the action selected by the AI
+        # Execute the action and get the reward
+        reward = self.execute_action(action)
+        # Get the next state after the action
+        next_state = self.get_state()
+        # Update the Q-table with the new information
+        self.update_q_table(state, action, reward, next_state)
+
+        if self.check_collision():
+            self.game_over()
+        else:
+            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)  # Decrease epsilon with decay, ensuring it's not below min_epsilon
+            if not self.game_over_flag:  # Only schedule the next turn if the game is not over
+                print(f"Next turn scheduled. Current position: {self.snake.coordinates[0]}, Direction: {self.direction}")  # Log the current position and direction
+                self.window.after(self.speed, self.next_turn)
+
+    def select_action(self, state):
+        """Select an action based on the epsilon-greedy strategy, avoiding immediate collisions."""
+        safe_actions = self.get_safe_actions()  # Get the list of safe actions based on the current state
+
+        if random.uniform(0, 1) < self.epsilon:
+            # Explore: select a random safe action
+            return random.choice(safe_actions)
+        else:
+            # Exploit: select the best action based on the current state and Q-table
+            q_values = self.q_table.get(state, {})
+            if q_values:
+                # Filter out unsafe actions from the Q-values dictionary
+                safe_q_values = {action: q for action, q in q_values.items() if action in safe_actions}
+                if safe_q_values:
+                    return max(safe_q_values, key=safe_q_values.get)
+                else:
+                    # If no safe actions have Q-values, choose a safe action randomly
+                    return random.choice(safe_actions)
+            else:
+                # If the state is not in the Q-table, choose a safe action randomly
+                return random.choice(safe_actions)
+
+    def get_safe_actions(self):
+        """Return a list of safe actions that won't result in immediate collisions, prioritizing the direction towards the food."""
+        safe_actions = []
+        x, y = self.snake.coordinates[0]
+        food_x, food_y = self.food.coordinates
+
+        # Check if moving in each direction would result in a collision
+        if y - self.space_size >= 0 and not any((x, y - self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
+            safe_actions.append('up')
+        if y + self.space_size < self.game_height and not any((x, y + self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
+            safe_actions.append('down')
+        if x - self.space_size >= 0 and not any((x - self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
+            safe_actions.append('left')
+        if x + self.space_size < self.game_width and not any((x + self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
+            safe_actions.append('right')
+
+        # Prioritize the direction towards the food by calculating the Manhattan distance to the food for each safe direction
+        safe_actions_with_distance = [(action, abs(food_x - x) + abs(food_y - y)) for action in safe_actions]
+        # Sort the safe actions by the distance to the food, ascending
+        safe_actions_with_distance.sort(key=lambda action: action[1])
+
+        # Return the sorted list of safe actions without the distances
+        return [action[0] for action in safe_actions_with_distance]
+
+    def execute_action(self, action):
+        """Execute the selected action and update the game state."""
         x, y = self.snake.coordinates[0]
 
-        if self.direction == "up":
+        if action == "up":
             y -= self.space_size
-        elif self.direction == "down":
+        elif action == "down":
             y += self.space_size
-        elif self.direction == "left":
+        elif action == "left":
             x -= self.space_size
-        elif self.direction == "right":
+        elif action == "right":
             x += self.space_size
 
         self.snake.coordinates.insert(0, (x, y))
         square = self.canvas.create_rectangle(x, y, x + self.space_size, y + self.space_size, fill=self.snake_color)
         self.snake.squares.insert(0, square)
 
+        # Initialize reward
+        reward = 0
+
         if x == self.food.coordinates[0] and y == self.food.coordinates[1]:
             self.score += 1
-            self.speed_to_display += 1
             self.score_label.config(text="Score:{}".format(self.score))
-            self.speed_label.config(text="Current Speed:{}".format(self.speed_to_display))
             self.canvas.delete("food")
             self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
             self.speed = max(30, self.speed - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
-            
+            reward = 10  # Positive reward for eating food
         else:
             del self.snake.coordinates[-1]
             self.canvas.delete(self.snake.squares[-1])
             del self.snake.squares[-1]
+            reward = -1  # Slight negative reward to encourage faster food finding
 
+        # Check for collisions and continue the game loop
         if self.check_collision():
             self.game_over()
-        else:
-            self.window.after(self.speed, self.next_turn)
+            reward = -10  # Negative reward for collision
+
+        return reward
+
+    def update_q_table(self, state, action, reward, next_state):
+        """Update the Q-table based on the action taken and the resulting state."""
+        # Learning rate and discount factor
+        alpha = 0.1
+        gamma = 0.9
+
+        # Initialize the state in the Q-table if it does not exist
+        if state not in self.q_table:
+            self.q_table[state] = {a: 0 for a in self.action_space}
+        if next_state not in self.q_table:
+            self.q_table[next_state] = {a: 0 for a in self.action_space}
+
+        # Current Q-value for the state-action pair
+        current_q_value = self.q_table[state][action]
+
+        # Maximum Q-value for the next state
+        next_max_q_value = max(self.q_table[next_state].values())
+
+        # Q-learning update rule
+        self.q_table[state][action] = current_q_value + alpha * (reward + gamma * next_max_q_value - current_q_value)
