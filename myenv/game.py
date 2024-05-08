@@ -27,7 +27,27 @@ class Game:
         self.epsilon_decay = 0.995  # Decay rate for epsilon after each game iteration
         self.actions = ['up', 'down', 'left', 'right']  # Possible actions
         self.q_table = {}  # Q-table for storing state-action values
+
+        self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
+        self.score_label.grid(row=0, column=0, sticky="w")
+        self.speed_label = Label(self.window, text="Current Speed: {}".format(self.speed_to_display), font=("Consolas", 25))
+        self.speed_label.grid(row=0, column=1, sticky="e")
+        self.canvas = Canvas(self.window, bg=self.background_color, height=self.game_height, width=self.game_width)
+        self.canvas.grid(row=1, column=0, columnspan=2)
+
+        self.snake = None
+        self.food = None
+        self.start_game()
+
+        # Moved to after the snake object is created
         self.initialize_q_table()
+
+        # Update key bindings to call methods on the Game class instance
+        self.window.bind('<Left>', lambda event: self.change_direction('left'))
+        self.window.bind('<Right>', lambda event: self.change_direction('right'))
+        self.window.bind('<Up>', lambda event: self.change_direction('up'))
+        self.window.bind('<Down>', lambda event: self.change_direction('down'))
+        self.window.bind('<Return>', self.restart_game)
 
     def initialize_q_table(self):
         # Initialize the Q-table with default values for all possible states and actions
@@ -66,24 +86,6 @@ class Game:
                     state = (food_relative_x, food_relative_y, direction, danger_straight, danger_right, danger_left)
                     states.append(state)
         return states
-
-        self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
-        self.score_label.grid(row=0, column=0, sticky="w")
-        self.speed_label = Label(self.window, text="Current Speed: {}".format(self.speed_to_display), font=("Consolas", 25))
-        self.speed_label.grid(row=0, column=1, sticky="e")
-        self.canvas = Canvas(self.window, bg=self.background_color, height=self.game_height, width=self.game_width)
-        self.canvas.grid(row=1, column=0, columnspan=2)
-
-        self.snake = None
-        self.food = None
-        self.start_game()
-
-        # Update key bindings to call methods on the Game class instance
-        self.window.bind('<Left>', lambda event: self.change_direction('left'))
-        self.window.bind('<Right>', lambda event: self.change_direction('right'))
-        self.window.bind('<Up>', lambda event: self.change_direction('up'))
-        self.window.bind('<Down>', lambda event: self.change_direction('down'))
-        self.window.bind('<Return>', self.restart_game)
 
     def check_collision(self, future_head_x=None, future_head_y=None):
         # Use current head position if no future position is provided
