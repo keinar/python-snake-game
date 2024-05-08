@@ -3,7 +3,8 @@ from food import Food
 from snake import Snake
 
 class Game:
-    def __init__(self):
+    def __init__(self, mode='manual'):
+        self.mode = mode  # 'manual' for playing manually, 'ai' for AI mode
         self.game_width = 1000
         self.game_height = 700
         self.speed = 150
@@ -18,7 +19,7 @@ class Game:
         self.window = Tk()
         self.window.title("Snake Game")
         self.window.resizable(False, False)
-        
+
         self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
         self.score_label.grid(row=0, column=0, sticky="w")
 
@@ -110,7 +111,7 @@ class Game:
             self.canvas.delete("food")
             self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
             self.speed = max(30, self.speed - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
-            
+
         else:
             del self.snake.coordinates[-1]
             self.canvas.delete(self.snake.squares[-1])
