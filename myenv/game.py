@@ -132,14 +132,8 @@ class Game:
         print(f"Initial snake position: {self.snake.coordinates[0]}")  # Log the initial position of the snake
         # Determine a safe initial direction based on the starting position of the snake
         safe_directions = self.get_safe_actions()
-        if 'down' in safe_directions:
-            self.direction = 'down'
-        elif 'right' in safe_directions:
-            self.direction = 'right'
-        elif 'left' in safe_directions:
-            self.direction = 'left'
-        elif 'up' in safe_directions:
-            self.direction = 'up'
+        if safe_directions:
+            self.direction = safe_directions[0]  # Set the initial direction to the first safe direction
         else:
             self.direction = 'right'  # Default direction if no safe actions are found
         self.change_direction(self.direction)
