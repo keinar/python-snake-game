@@ -195,13 +195,13 @@ class Game:
         x, y = self.snake.coordinates[0]
 
         # Check if moving in each direction would result in a collision
-        if y - self.space_size >= 0 and not self.check_collision((x, y - self.space_size)):
+        if y - self.space_size >= 0 and not any((x, y - self.space_size) == body_part for body_part in self.snake.coordinates):
             safe_actions.append('up')
-        if y + self.space_size < self.game_height and not self.check_collision((x, y + self.space_size)):
+        if y + self.space_size < self.game_height and not any((x, y + self.space_size) == body_part for body_part in self.snake.coordinates):
             safe_actions.append('down')
-        if x - self.space_size >= 0 and not self.check_collision((x - self.space_size, y)):
+        if x - self.space_size >= 0 and not any((x - self.space_size, y) == body_part for body_part in self.snake.coordinates):
             safe_actions.append('left')
-        if x + self.space_size < self.game_width and not self.check_collision((x + self.space_size, y)):
+        if x + self.space_size < self.game_width and not any((x + self.space_size, y) == body_part for body_part in self.snake.coordinates):
             safe_actions.append('right')
 
         return safe_actions if safe_actions else ['up', 'down', 'left', 'right']  # Return all actions if no safe actions are found
