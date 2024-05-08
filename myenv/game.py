@@ -163,6 +163,8 @@ class Game:
                 print("Error: Canvas dimensions could not be confirmed after multiple attempts.")
 
     def restart_game(self, event):
+        self.game_over_flag = False  # Reset the game over flag
+        self.turn_counter = 0  # Reset the turn counter
         self.start_game()
 
     def next_turn(self):
@@ -173,6 +175,7 @@ class Game:
         if self.turn_counter > self.max_turns:  # Check if the maximum number of turns has been reached
             self.game_over()  # Terminate the game
             return  # Exit the function to prevent further game progression
+
         state = self.get_state()
         action = self.select_action(state)
         print(f"Action selected: {action}")  # Log the action selected by the AI
