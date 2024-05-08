@@ -36,7 +36,23 @@ The game is designed with an Object-Oriented Programming (OOP) approach, with se
 
 ## AI Trainer
 
-An AI trainer is currently under development to teach the game how to play and level up automatically using machine learning techniques.
+The AI trainer in the Python Snake Game is designed to learn how to play the game autonomously through reinforcement learning, specifically using a Q-learning algorithm. The AI observes the state of the game, makes decisions on the next move, and learns from the outcomes to improve over time.
+
+### Epsilon Decay Strategy
+
+To balance the exploration of new actions and the exploitation of known rewarding actions, the AI employs an epsilon decay strategy. Initially, the AI is more likely to choose actions at random to explore the game environment. Over time, as it learns, the epsilon value decays, and the AI becomes more confident in exploiting the knowledge it has gained to make more informed decisions.
+
+### Running the Game with AI Trainer
+
+To run the game with the AI trainer in training mode, use the following command:
+
+```
+python ai_train.py
+```
+
+This will start the game with the AI making decisions and learning from each turn. The game's interface will display the moves chosen by the AI, and the game speed will adjust according to the AI's performance.
+
+For more information on the AI's implementation and the Q-learning algorithm, please refer to the `ai_train.py` file, which contains the AI trainer's logic and parameters.
 
 ## Contributing
 
