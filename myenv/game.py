@@ -143,10 +143,15 @@ class Game:
         # Determine a safe initial direction based on the starting position of the snake
         safe_directions = self.get_safe_actions()
         if safe_directions:
-            self.direction = safe_directions[0]  # Set the initial direction to the first safe direction
+            # Choose the safest initial direction that does not lead to a collision in the next turn
+            for direction in safe_directions:
+                self.change_direction(direction)
+                if not self.check_collision(self.snake.get_next_head_position(direction)):
+                    self.direction = direction
+                    break
         else:
             # If no safe actions are found, reposition the snake to a safe starting position
-            self.snake.reposition_snake()
+            self.snake.reposition_snake(self.canvas, self.game_width, self.game_height, self.space_size)
             safe_directions = self.get_safe_actions()
             self.direction = safe_directions[0] if safe_directions else 'right'  # Set the initial direction to the first safe direction or default if none are safe
         self.change_direction(self.direction)

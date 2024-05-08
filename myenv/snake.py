@@ -5,6 +5,7 @@ class Snake:
         self.body_size = body_parts
         self.coordinates = []
         self.squares = []
+        self.space_size = space_size
 
         if initial_position:
             start_x, start_y = initial_position
@@ -13,7 +14,6 @@ class Snake:
             start_x = canvas.winfo_width() // 2
             # Initialize the snake's body parts vertically within the canvas bounds
             # The snake's body parts will be initialized downwards from the starting position
-            # Adjust the start_y position to be lower on the canvas to prevent immediate collision
             start_y = (canvas.winfo_height() // 2) + (space_size * (body_parts - 1))
 
         for i in range(body_parts):
@@ -48,3 +48,19 @@ class Snake:
         for x, y in self.coordinates:
             square = canvas.create_rectangle(x, y, x + space_size, y + space_size, fill=snake_color, tag='snake')
             self.squares.append(square)
+
+    def get_next_head_position(self, direction):
+        """Calculate the next position of the snake's head based on the given direction."""
+        # Get the current head position
+        head_x, head_y = self.coordinates[0]
+        # Determine the next position based on the direction
+        if direction == 'up':
+            head_y -= self.space_size
+        elif direction == 'down':
+            head_y += self.space_size
+        elif direction == 'left':
+            head_x -= self.space_size
+        elif direction == 'right':
+            head_x += self.space_size
+        # Return the new position
+        return head_x, head_y
