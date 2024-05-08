@@ -24,6 +24,10 @@ class Game:
         self.max_turns = 100  # Set the maximum number of turns for the game
         self.game_over_flag = False  # Flag to indicate if the game is over
 
+        self.epsilon = 1.0  # Initial epsilon value for exploration
+        self.min_epsilon = 0.01  # Minimum epsilon value to ensure some exploration
+        self.epsilon_decay = 0.01  # Epsilon decay rate after each turn
+
         self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
         self.score_label.grid(row=0, column=0, sticky="w")
 
@@ -200,14 +204,14 @@ class Game:
         if self.check_collision():
             self.game_over()
         else:
+            self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)  # Decrease epsilon with decay, ensuring it's not below min_epsilon
             self.window.after(self.speed, self.next_turn)
 
     def select_action(self, state):
         """Select an action based on the epsilon-greedy strategy, avoiding immediate collisions."""
-        epsilon = 0.1  # Exploration probability
         safe_actions = self.get_safe_actions()  # Get the list of safe actions based on the current state
 
-        if random.uniform(0, 1) < epsilon:
+        if random.uniform(0, 1) < self.epsilon:
             # Explore: select a random safe action
             return random.choice(safe_actions)
         else:
