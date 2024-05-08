@@ -124,9 +124,11 @@ class Game:
         initial_snake_x = self.game_width // 2
         initial_snake_y = self.game_height // 2
         self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(initial_snake_x, initial_snake_y))
+        print(f"Initial snake position: {self.snake.coordinates[0]}")  # Log the initial position of the snake
         self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
         # Ensure the first move is in a safe direction
         self.change_direction(self.direction)
+        print(f"Initial direction: {self.direction}")  # Log the initial direction of the snake
         self.next_turn()
 
     def check_canvas_dimensions(self):
