@@ -19,6 +19,9 @@ To activate AI mode and watch the AI play the game, use the command:
 ```
 python3 main.py --mode ai
 ```
+The game can be played in two modes:
+- Manual mode: where the player controls the snake using the keyboard.
+- AI mode: where the AI controls the snake and learns to play over time.
 
 ## AI Trainer
 The AI trainer is implemented using a Q-learning algorithm, which is a model-free reinforcement learning technique. It is currently in a developmental stage and is designed to improve its gameplay over time by learning from its actions. The AI makes decisions based on the state of the game, which includes the position of the snake, the position of the food, and the direction of the snake.
