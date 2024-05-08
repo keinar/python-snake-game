@@ -178,8 +178,6 @@ class Game:
     def execute_action(self, action):
         # Change the snake's direction based on the action
         self.change_direction(action)
-        # Move the snake and check for collisions or food consumption
-        self.next_turn()
         # Calculate the reward based on the game state changes
         reward = self.calculate_reward()
         # Get the next state after the action is executed
@@ -254,13 +252,18 @@ class Game:
         self.q_table[state][action] = current_q_value + alpha * (reward + gamma * max_next_q_value - current_q_value)
 
     def ai_next_turn(self):
-        # Get the current state of the game
-        state = self.get_state()
-        # Select an action based on the current state
-        action = self.select_action(state)
-        # Execute the chosen action and get the reward
-        reward, next_state = self.execute_action(action)
-        # Update the Q-table with the new state and reward information
-        self.update_q_table(state, action, reward, next_state)
-        # Schedule the next turn
-        self.window.after(self.speed, self.ai_next_turn)
+        # Check if the game is over before scheduling the next turn
+        if not self.check_collision():
+            # Get the current state of the game
+            state = self.get_state()
+            # Select an action based on the current state
+            action = self.select_action(state)
+            # Execute the chosen action and get the reward
+            reward, next_state = self.execute_action(action)
+            # Update the Q-table with the new state and reward information
+            self.update_q_table(state, action, reward, next_state)
+            # Schedule the next turn if the game is not over
+            self.window.after(self.speed, self.ai_next_turn)
+        else:
+            # End the game if a collision is detected
+            self.game_over()
