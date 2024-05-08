@@ -82,12 +82,12 @@ class Game:
             self.direction = new_direction
 
     def get_state(self):
-        """Return the current state of the game."""
-        state = {
-            'snake_position': self.snake.coordinates,
-            'food_position': self.food.coordinates,
-            'current_direction': self.direction
-        }
+        """Return the current state of the game as a string."""
+        # Convert the positions to a string format
+        snake_position = '-'.join(f"{x},{y}" for x, y in self.snake.coordinates)
+        food_position = f"{self.food.coordinates[0]},{self.food.coordinates[1]}"
+        # Concatenate the positions and current direction into a single string
+        state = f"{snake_position}|{food_position}|{self.direction}"
         return state
 
     def get_reward(self):
@@ -213,11 +213,17 @@ class Game:
         alpha = 0.1
         gamma = 0.9
 
+        # Initialize the state in the Q-table if it does not exist
+        if state not in self.q_table:
+            self.q_table[state] = {a: 0 for a in self.action_space}
+        if next_state not in self.q_table:
+            self.q_table[next_state] = {a: 0 for a in self.action_space}
+
         # Current Q-value for the state-action pair
-        current_q_value = self.q_table.get(state, {}).get(action, 0)
+        current_q_value = self.q_table[state][action]
 
         # Maximum Q-value for the next state
-        next_max_q_value = max(self.q_table.get(next_state, {}).values(), default=0)
+        next_max_q_value = max(self.q_table[next_state].values())
 
         # Q-learning update rule
         self.q_table[state][action] = current_q_value + alpha * (reward + gamma * next_max_q_value - current_q_value)
