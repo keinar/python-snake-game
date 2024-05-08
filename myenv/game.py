@@ -243,19 +243,21 @@ class Game:
 
         # Check if moving in each direction would result in a collision
         if y - self.space_size >= 0 and not any((x, y - self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append(('up', abs(food_x - x) + abs(food_y - (y - self.space_size))))
+            safe_actions.append('up')
         if y + self.space_size < self.game_height and not any((x, y + self.space_size) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append(('down', abs(food_x - x) + abs(food_y - (y + self.space_size))))
+            safe_actions.append('down')
         if x - self.space_size >= 0 and not any((x - self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append(('left', abs(food_x - (x - self.space_size)) + abs(food_y - y)))
+            safe_actions.append('left')
         if x + self.space_size < self.game_width and not any((x + self.space_size, y) == body_part for body_part in self.snake.coordinates[1:]):
-            safe_actions.append(('right', abs(food_x - (x + self.space_size)) + abs(food_y - y)))
+            safe_actions.append('right')
 
+        # Prioritize the direction towards the food by calculating the Manhattan distance to the food for each safe direction
+        safe_actions_with_distance = [(action, abs(food_x - x) + abs(food_y - y)) for action in safe_actions]
         # Sort the safe actions by the distance to the food, ascending
-        safe_actions.sort(key=lambda action: action[1])
+        safe_actions_with_distance.sort(key=lambda action: action[1])
 
         # Return the sorted list of safe actions without the distances
-        return [action[0] for action in safe_actions]
+        return [action[0] for action in safe_actions_with_distance]
 
     def execute_action(self, action):
         """Execute the selected action and update the game state."""
