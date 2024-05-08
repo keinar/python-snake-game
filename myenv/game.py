@@ -20,6 +20,9 @@ class Game:
         self.window.title("Snake Game")
         self.window.resizable(False, False)
 
+        self.turn_counter = 0  # Initialize the turn counter at 0
+        self.max_turns = 100  # Set the maximum number of turns for the game
+
         self.score_label = Label(self.window, text="Score: {}".format(self.score), font=("Consolas", 25))
         self.score_label.grid(row=0, column=0, sticky="w")
 
@@ -102,18 +105,26 @@ class Game:
             return -1  # Slight negative reward to encourage faster food finding
 
     def start_game(self):
-        self.direction = "down"  # Set the initial direction to 'down' to prevent collision with the wall
+        # Removed setting initial direction here; will set it in initialize_game_objects after canvas dimensions are confirmed
         self.score = 0
         self.speed = 80
         self.score_label.config(text="Score:{}".format(self.score))
         self.canvas.delete("gameover")
-
+        # Delay the start of the game to ensure the canvas is fully rendered
         # Increase the delay to allow more time for the canvas to be fully rendered
         self.window.after(500, self.initialize_game_objects)
 
     def initialize_game_objects(self):
         print("Initializing game objects...")
         self.check_canvas_dimensions()
+        safe_directions = self.get_safe_actions()
+        if safe_directions:
+            self.direction = safe_directions[0]  # Set the initial direction to the first safe direction
+        else:
+            self.direction = 'right'  # Default direction if no safe actions are found
+        self.snake = Snake(self.body_parts, self.canvas, self.space_size, self.snake_color, initial_position=(self.game_width // 2, self.game_height // 4))
+        self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
+        self.next_turn()
 
     def check_canvas_dimensions(self):
         if not hasattr(self, 'init_attempts'):
@@ -140,6 +151,11 @@ class Game:
         self.start_game()
 
     def next_turn(self):
+        self.turn_counter += 1  # Increment the turn counter
+        if self.turn_counter > self.max_turns:  # Check if the maximum number of turns has been reached
+            self.game_over()  # Terminate the game
+            return  # Exit the function to prevent further game progression
+
         if self.score == 0:  # On the first turn, ensure the snake moves in a safe direction
             # Determine a safe initial direction based on the starting position of the snake
             safe_directions = self.get_safe_actions()
