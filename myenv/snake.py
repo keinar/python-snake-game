@@ -12,16 +12,16 @@ class Snake:
             # Start the snake in the middle of the canvas
             start_x = canvas.winfo_width() // 2
             # Initialize the snake's body parts vertically within the canvas bounds
-            # The snake's body parts will be initialized upwards from the starting position
-            # Adjust the start_y position to be higher up on the canvas to prevent immediate collision
-            start_y = (canvas.winfo_height() // 2) - (space_size * (body_parts - 1))
+            # The snake's body parts will be initialized downwards from the starting position
+            # Adjust the start_y position to be lower on the canvas to prevent immediate collision
+            start_y = (canvas.winfo_height() // 2) + (space_size * (body_parts - 1))
 
         for i in range(body_parts):
-            body_part_y = start_y - (i * space_size)  # Adjusted to initialize upwards
+            body_part_y = start_y + (i * space_size)  # Adjusted to initialize downwards
             # Ensure the body part is within the canvas bounds
-            if body_part_y < 0:
-                # If the body part is above the top edge, place it starting from the bottom
-                body_part_y = canvas.winfo_height() - ((body_parts - i) * space_size)
+            if body_part_y >= canvas.winfo_height():
+                # If the body part is below the bottom edge, place it starting from the top
+                body_part_y = (i * space_size)
             self.coordinates.append([start_x, body_part_y])
             print(f"Initializing body part {i}: x={start_x}, y={body_part_y}")  # Logging the initialization of each body part
 
