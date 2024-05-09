@@ -1,11 +1,17 @@
+import logging
 from tkinter import *
 from food import Food
 from snake import Snake
 import numpy as np
 
+logging.basicConfig(filename='snake_game.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.debug("Game script started.")
+
 class Game:
+
     def __init__(self, mode='manual'):
         self.mode = mode  # 'manual' for playing manually, 'ai' for AI mode
+        logging.debug(f"Initializing game in {self.mode} mode")
         self.game_width = 1000
         self.game_height = 700
         self.speed = 150
@@ -106,6 +112,7 @@ class Game:
         return False
 
     def game_over(self):
+        logging.debug("Game over. Final score: {}".format(self.score))
         self.canvas.delete(ALL)
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, fill="red", text="GAME OVER", font=("consolas", 70), tag="gameover")
         self.canvas.create_text(self.canvas.winfo_width()/2, self.canvas.winfo_height()/2 + 50, fill="blue", text="Press Enter to restart", font=("consolas", 30), tag="gameover")
@@ -136,6 +143,7 @@ class Game:
         self.start_game()
 
     def next_turn(self):
+        logging.debug(f"Starting next turn. Current direction: {self.direction}")
         if self.mode == 'ai':
             self.ai_next_turn()
         else:
@@ -162,6 +170,7 @@ class Game:
                 self.canvas.delete("food")
                 self.food = Food(self.game_width, self.game_height, self.space_size, self.canvas, self.food_color)
                 self.speed = max(30, self.speed - 1)  # Decrease speed by 1, minimum of 30 to avoid too high speed
+                logging.debug(f"Food eaten. Score: {self.score}, Speed: {self.speed}")
             else:
                 del self.snake.coordinates[-1]
                 self.canvas.delete(self.snake.squares[-1])
@@ -169,11 +178,14 @@ class Game:
 
             if self.check_collision():
                 self.game_over()
+                logging.debug(f"Game over. Final score: {self.score}")
             else:
                 self.window.after(self.speed, self.next_turn)
+                logging.debug("Turn completed. Scheduling next turn.")
                 # Epsilon decay after each turn
                 if self.mode == 'ai':
                     self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+                    logging.debug(f"Epsilon decayed to: {self.epsilon}")
 
     def execute_action(self, action):
         # Change the snake's direction based on the action
