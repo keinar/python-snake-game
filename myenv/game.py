@@ -5,7 +5,7 @@ from snake import Snake
 import numpy as np
 
 logging.basicConfig(filename='snake_game.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
-logging.debug("Game script started.")
+logging.debug("Logging is configured and the game script has started execution.")
 
 class Game:
 
